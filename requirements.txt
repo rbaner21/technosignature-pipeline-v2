@@ -1,0 +1,13 @@
+s3fs
+boto3
+astroquery
+lightkurve
+astropy
+pandas
+numpy
+scikit-learn
+jinja2
+plotly
+dash
+jupyterlab
+nbconvert
