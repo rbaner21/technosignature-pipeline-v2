@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Report {{ rank }}</title></head>
+<body>
+  <h1>Candidate {{ rank }}</h1>
+  <ul>
+    {% for k,v in data.items() %}
+      <li><strong>{{ k }}:</strong> {{ v }}</li>
+    {% endfor %}
+  </ul>
+  <div>{{ plot_div | safe }}</div>
+</body>
+</html>
