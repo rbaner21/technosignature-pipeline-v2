@@ -19,7 +19,7 @@ df = pd.read_csv(data_csv)
 
 # 3. Set up Jinja2 environment pointing at src/templates
 env = Environment(loader=FileSystemLoader(template_dir))
-template = env.get_template("report.html")
+template = env.get_template("reports.html")
 
 # 4. Make sure the reports folder exists
 os.makedirs(output_dir, exist_ok=True)
