@@ -2,42 +2,39 @@
 """
 Generate HTML reports for each candidate using Jinja2.
 """
-import os
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 import plotly.express as px
+import os
 
-# 1. Compute key paths
-script_dir   = os.path.dirname(os.path.abspath(__file__))           # src/
-repo_dir     = os.path.abspath(os.path.join(script_dir, os.pardir)) # repo root
-data_csv     = os.path.join(repo_dir, "outputs", "top_candidates.csv")
-template_dir = os.path.join(script_dir, "templates")                # src/templates
-output_dir   = os.path.join(repo_dir, "outputs", "reports")
+# 1. Load the top‑20 list
+df = pd.read_csv('../outputs/top_candidates.csv')
 
-# 2. Load top‐20 candidates
-df = pd.read_csv(data_csv)
+# 2. Setup Jinja2 to use your existing template file (here called reports.html)
+env = Environment(loader=FileSystemLoader('src/templates'))
+template = env.get_template('reports.html')
 
-# 3. Set up Jinja2 environment pointing at src/templates
-env = Environment(loader=FileSystemLoader(template_dir))
-template = env.get_template("reports.html")
+# 3. Ensure output folder exists
+os.makedirs('../outputs/reports', exist_ok=True)
 
-# 4. Make sure the reports folder exists
-os.makedirs(output_dir, exist_ok=True)
-
-# 5. Generate one HTML report per row
-for idx, row in df.iterrows():
-    # Example plot; feel free to swap in any per‐candidate figure
-    fig = px.scatter(df, x="best_period", y="max_power", title="Transit Power vs. Period")
+# 4. Loop over candidates
+for i, row in df.iterrows():
+    # bar chart of only this candidate’s techno_score
+    candidate_df = df.iloc[[i]]
+    fig = px.bar(
+        candidate_df,
+        x='pl_name',
+        y='techno_score',
+        title=f"Techno Score for {row['pl_name']}"
+    )
     plot_div = fig.to_html(full_html=False)
 
+    # render and write
     html = template.render(
-        rank     = idx + 1,
-        data     = row.to_dict(),
-        plot_div = plot_div
+        rank=i+1,
+        data=row.to_dict(),
+        plot_div=plot_div
     )
-
-    out_path = os.path.join(output_dir, f"report_{idx+1}.html")
-    with open(out_path, "w") as f:
+    outpath = f'../outputs/reports/report_{i+1}.html'
+    with open(outpath, 'w') as f:
         f.write(html)
-
-print(f"✅ Reports generated in {output_dir}/")
