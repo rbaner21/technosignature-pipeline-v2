@@ -1,32 +1,43 @@
 #!/usr/bin/env python3
+"""
+Generate HTML reports for each candidate using Jinja2.
+"""
+import os
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 import plotly.express as px
-import os, pathlib
 
-# locate project root & output folders
-HERE     = pathlib.Path(__file__).parent
-ROOT     = HERE.parent
-OUT_DIR  = ROOT / "outputs"
-REPORTS  = OUT_DIR / "reports"
-TEMPLATE = HERE / "templates"
+# 1. Compute key paths
+script_dir   = os.path.dirname(os.path.abspath(__file__))           # src/
+repo_dir     = os.path.abspath(os.path.join(script_dir, os.pardir)) # repo root
+data_csv     = os.path.join(repo_dir, "outputs", "top_candidates.csv")
+template_dir = os.path.join(script_dir, "templates")                # src/templates
+output_dir   = os.path.join(repo_dir, "outputs", "reports")
 
-# 1) load top_candidates.csv from <repo>/outputs/
-df = pd.read_csv(OUT_DIR / "top_candidates.csv")
+# 2. Load top‐20 candidates
+df = pd.read_csv(data_csv)
 
-# 2) configure Jinja2
-env      = Environment(loader=FileSystemLoader(str(TEMPLATE)))
+# 3. Set up Jinja2 environment pointing at src/templates
+env = Environment(loader=FileSystemLoader(template_dir))
 template = env.get_template("report.html")
 
-# 3) ensure reports dir exists
-os.makedirs(REPORTS, exist_ok=True)
+# 4. Make sure the reports folder exists
+os.makedirs(output_dir, exist_ok=True)
 
-# 4) render one HTML per candidate
-for i, row in df.iterrows():
-    fig      = px.scatter(df, x="best_period", y="max_power",
-                          title="Transit Power vs. Period")
+# 5. Generate one HTML report per row
+for idx, row in df.iterrows():
+    # Example plot; feel free to swap in any per‐candidate figure
+    fig = px.scatter(df, x="best_period", y="max_power", title="Transit Power vs. Period")
     plot_div = fig.to_html(full_html=False)
-    html     = template.render(rank=i+1, data=row.to_dict(),
-                               plot_div=plot_div)
-    with open(REPORTS / f"report_{i+1}.html", "w") as f:
+
+    html = template.render(
+        rank     = idx + 1,
+        data     = row.to_dict(),
+        plot_div = plot_div
+    )
+
+    out_path = os.path.join(output_dir, f"report_{idx+1}.html")
+    with open(out_path, "w") as f:
         f.write(html)
+
+print(f"✅ Reports generated in {output_dir}/")
